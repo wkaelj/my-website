@@ -56,6 +56,11 @@ function resizeHandler()
     canvas.height = window.innerHeight;
 }
 
+/**
+ * @type {String}
+ */
+let ipAddress = "";
+
 function run()
 {
   canvas = document.querySelector('canvas');
@@ -63,31 +68,31 @@ function run()
   {
     throw "Wrong canvas";
   }
-
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   g = canvas.getContext('2d');
+  window.onresize = resizeHandler;
 
+  ipAddress = getIPAddress();
+  console.log(ipAddress);
   update();
 
-  window.onresize = resizeHandler;
-  
   return 0;
 }
 
 function drawCircle(g, degree)
 {
 
-    let height = window.innerHeight;
-    if(window.innerWidth < window.innerHeight) height = window.innerWidth;
-    height = height/2.5
-    let circleCoords = directionToVector(degree, height);
-    g.beginPath();
-    g.arc(
-    circleCoords.getX + window.innerWidth / 2, 
-    circleCoords.getY + window.innerHeight / 2, 
-    window.innerHeight/20, 0, Math.PI * 2, false);
-    g.stroke();
+  let height = window.innerHeight;
+  if(window.innerWidth < window.innerHeight) height = window.innerWidth;
+  height = height/2.5
+  let circleCoords = directionToVector(degree, height);
+  g.beginPath();
+  g.arc(
+  circleCoords.getX + window.innerWidth / 2, 
+  circleCoords.getY + window.innerHeight / 2, 
+  window.innerHeight/20, 0, Math.PI * 2, false);
+  g.stroke();
 }
 
 var hue = 0;
@@ -131,10 +136,13 @@ function update()
   drawCircle(g, Math.PI * angle3);
   drawCircle(g, Math.PI * angle4);
 
+  // draw user ip
+  g.strokeStyle = "#000000";
+  g.font = "12px sans-serif";
+  g.strokeText(ipAddress.toString(), 5, 17, window.innerWidth);
+
   return;
 }
-
-run();
 
 /**
  * Converts an HSV color value to RGB. Conversion formula
@@ -166,4 +174,14 @@ function hsvToRgb(h, s, v) {
   }
 
   return [ r * 255, g * 255, b * 255 ];
+}
+
+// Usage
+
+function getIPAddress()
+{
+  let req = new XMLHttpRequest()
+  req.open( "GET", "https://api.ipify.org", false );
+  req.send(null);
+  return req.responseText;
 }
