@@ -39,6 +39,39 @@ function directionToVector(degree, magnitude)
   let y = Math.sin(degree) * magnitude;
   return new Vector(x, y);
 }
+/**
+* @param {GeolocationPosition} position 
+*/
+function foundCoordintes(position)
+{
+  coordinates =  
+    position.coords.latitude.toPrecision(8).toString() + ", " +
+    position.coords.latitude.toPrecision(8).toString();
+};
+
+/**
+ * 
+ * @param {GeolocationPositionError} error 
+ */
+function noCoordinates (error)
+{
+  console.error(error);
+}
+
+function getCoordinates()
+{
+
+  navigator.geolocation.watchPosition(foundCoordintes, noCoordinates, );
+
+}
+
+async function getIPAddress()
+{
+  let req = new XMLHttpRequest()
+  req.open( "GET", "https://api.ipify.org", false);
+  req.send(null);
+  return req.responseText.toString()
+}
 
 /**
  * @type {CanvasRenderingContext2D}
@@ -61,6 +94,11 @@ function resizeHandler()
  */
 let ipAddress = "";
 
+/**
+ * @type {String}
+ */
+let coordinates = "Could not retrieve coordinates";
+
 function run()
 {
   canvas = document.querySelector('canvas');
@@ -73,8 +111,10 @@ function run()
   g = canvas.getContext('2d');
   window.onresize = resizeHandler;
 
-  ipAddress = getIPAddress();
+  getIPAddress().then((string) => { ipAddress = string; });
+  getCoordinates();
   console.log(ipAddress);
+  console.log(coordinates);
   update();
 
   return 0;
@@ -95,6 +135,46 @@ function drawCircle(g, degree)
   g.stroke();
 }
 
+class Square
+{
+  /**
+   * @type {Number}
+   */
+  #increment = 2
+
+
+  /**
+   * @type {Number}
+   */
+  #max = window.innerWidth > window.innerHeight ? window.innerHeight * 0.25 : window.innerWidth * 0.25;
+
+  /**
+ * @type {Number}
+ */
+  #min = this.#max * 0.2;
+
+  /**
+   * @type {Number}
+   */
+  #sizepx = this.#min;
+
+  /**
+   * 
+   * @param {CanvasRenderingContext2D} g 
+   */
+  update(g)
+  {
+    if(this.#sizepx > this.#max) this.#increment = -this.#increment;
+    if(this.#sizepx < this.#min) this.#increment = -this.#increment;
+    this.#sizepx += this.#increment;
+    let x = window.innerWidth / 2 - this.#sizepx / 2;
+    let y = window.innerHeight / 2 - this.#sizepx / 2;
+    g.fillStyle = "#000000";
+    g.fillRect(x, y, this.#sizepx, this.#sizepx)
+  }
+
+}
+
 var hue = 0;
 var hue2 = 0.5;
 var angle = 0;
@@ -102,11 +182,13 @@ var angle2 = 0.5;
 var angle3 = 1;
 var angle4 = 1.5;
 
+let square = new Square();
+
 function update()
 {
   g;
   requestAnimationFrame(update);
-  const increment = 0.01;
+  const increment = 0.001;
   hue += increment;
   hue2 += increment;
   if(hue > 1) hue = 0;
@@ -122,13 +204,14 @@ function update()
   g.fillStyle = gradientStyle;
   g.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-  angle += 0.01;
+  const angleIncrement = 0.01;
+  angle += angleIncrement;
   if (angle >= 2) angle = 0;
-  angle2 += 0.01;
+  angle2 += angleIncrement;
   if (angle2 >= 2) angle2 = 0;
-  angle3 += 0.01;
+  angle3 += angleIncrement;
   if (angle3 >= 2) angle3 = 0;
-  angle4 += 0.01;
+  angle4 += angleIncrement;
   if (angle4 >= 2) angle4 = 0;
 
   drawCircle(g, Math.PI * angle);
@@ -137,9 +220,13 @@ function update()
   drawCircle(g, Math.PI * angle4);
 
   // draw user ip
-  g.strokeStyle = "#000000";
-  g.font = "12px sans-serif";
-  g.strokeText(ipAddress.toString(), 5, 17, window.innerWidth);
+  const fontSize = 30;
+  g.font = fontSize.toString() + "px sans-serif";
+  g.fillStyle = "#ffffff"
+  g.fillText(ipAddress, 5, fontSize + 5, window.innerWidth);
+  g.fillText(coordinates, 5, fontSize * 2 + 5, window.innerWidth);
+
+  square.update(g);
 
   return;
 }
@@ -174,14 +261,4 @@ function hsvToRgb(h, s, v) {
   }
 
   return [ r * 255, g * 255, b * 255 ];
-}
-
-// Usage
-
-function getIPAddress()
-{
-  let req = new XMLHttpRequest()
-  req.open( "GET", "https://api.ipify.org", false );
-  req.send(null);
-  return req.responseText;
 }
